@@ -1,3 +1,5 @@
+import { useGetTodosQuery, useAddTodoMutation } from '../api/apiSlice';
+import { useUpdateTodoMutation, useDeleteTodoMutation } from '../api/apiSlice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash, faUpload } from '@fortawesome/free-solid-svg-icons'
 import { useState } from "react"
@@ -5,8 +7,21 @@ import { useState } from "react"
 const TodoList = () => {
   const [newTodo, setNewTodo] = useState('')
 
+  const {
+    data: todos,
+    isLoading,
+    isSuccess,
+    isError,
+    error
+  } = useGetTodosQuery();
+
+  const [addTodo] = useAddTodoMutation()
+  const [updateTodo] = useUpdateTodoMutation()
+  const [deleteTodo] = useDeleteTodoMutation();
+
   const handleSubmit = (e) => {
       e.preventDefault();
+      addTodo({userId:1, title:newTodo, completed: false})
       setNewTodo('')
   }
 
@@ -28,7 +43,32 @@ const TodoList = () => {
       </form>
 
 
-  let content;
+  let content = <p>Bug...Bug</p>;
+  if (isLoading) {
+    content = <p>Loading...</p>
+  } else if (isSuccess) {
+    content = todos.map(todo => {
+      const id = todo.id;
+      return (
+        <article key={id}>
+          <div className='todo'>
+            <input
+              type="checkbox"
+              checked={todo.completed}
+              id={id}
+              onChange={()=>updateTodo({...todo, completed: !todo.completed})}
+            />
+            <label htmlFor={todo.id}>{todo.title}</label>
+          </div>
+          <button className="trash" onClick={() => deleteTodo({id})}>
+            <FontAwesomeIcon icon={faTrash} />
+          </button>
+        </article>
+      )
+    })
+  } else if (isError) {
+    content = <p>{error}</p>
+  }
 
   return (
       <main>
